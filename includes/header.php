@@ -5,8 +5,8 @@ $page = preg_replace('/^(index|default|home|welcome)\.(php|html|htm|asp|aspx)$/i
 $path = preg_replace('/\/[^\/]*$/', '/', $pageURL);
 $mainPath = preg_replace('/^(\/[^\/]*\/).*$/', '$1', $path);
 
-if ($server != 'direct.oliverkinne.com' && $server != 'www.oliverkinne.com') {
-	header('Location: http://www.oliverkinne.com'.$path.$page, true, 301);
+if ($server != 'direct.clansofmacaria.com' && $server != 'www.clansofmacaria.com') {
+	header('Location: http://www.clansofmacaria.com'.$path.$page, true, 301);
 	die();
 }
 ?><!DOCTYPE HTML>
