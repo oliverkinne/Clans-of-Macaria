@@ -1,4 +1,4 @@
-<?php include '/srv/www/htdocs/clans-of-macaria/includes/header.php' ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includes/header.php' ?>
 <?php
 ini_set('display_errors',1);
 ini_set('display_startup_errors',1);
@@ -15,7 +15,7 @@ error_reporting(-1);
 <body>
 <?php
 
-switch ($_GET['setup']) {
+switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 	// no setup parameter
 	case null:
 ?>
@@ -162,4 +162,4 @@ switch ($_GET['setup']) {
 }
 
 ?>
-<?php include '/srv/www/htdocs/clans-of-macaria/includes/footer.php' ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includes/footer.php' ?>

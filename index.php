@@ -1,4 +1,4 @@
-<?php include '/srv/www/htdocs/clans-of-macaria/includes/header.php' ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includes/header.php' ?>
 
 	<title>Clans of Macaria - Welcome</title>
 	<meta property="og:title" content="Clans of Macaria - Welcome" />
@@ -9,4 +9,4 @@
 
 <body>
 	<p>To be built...</p>
-<?php include '/srv/www/htdocs/clans-of-macaria/includes/footer.php' ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includes/footer.php' ?>
