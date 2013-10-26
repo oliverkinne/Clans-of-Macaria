@@ -1,1 +1,0 @@
-<?php $clans_of_macaria_password = '<PASSWORD WILL BE SAVED HERE>'; ?>
