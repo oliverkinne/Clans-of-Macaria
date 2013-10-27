@@ -1,3 +1,4 @@
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includes/mysql.php' ?>
 <?php include $_SERVER['DOCUMENT_ROOT'] . '/includes/header.php' ?>
 <?php
 ini_set('display_errors',1);
@@ -17,7 +18,7 @@ error_reporting(-1);
 
 switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 	// no setup parameter
-	case null:
+	case '':
 ?>
 	<p>When you click on the setup link below, the system will clear out everything that's currently set up, delete all databases and data, and re-create the game system from scratch.</p>
 	<p>YOU WILL LOSE ALL DATA!</p>
@@ -68,29 +69,15 @@ switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 				echo '<p>Database clans_of_macaria selected successfully</p>';
 
 				// Tables
-				$sql = 'CREATE TABLE games (gameid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, PRIMARY KEY (gameid))';
-				if (mysqli_query($con, $sql))
-					echo '<p>Table games created successfully</p>';
-				else
-					echo '<p>Error creating table games: ' . mysqli_error($con) . '</p>';
-
-				$sql = 'CREATE TABLE players (playerid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) NOT NULL, username VARCHAR(25) UNIQUE NOT NULL, password CHAR(18) NOT NULL, PRIMARY KEY (playerid))';
-				if (mysqli_query($con, $sql))
-					echo '<p>Table players created successfully</p>';
-				else
-					echo '<p>Error creating table players: ' . mysqli_error($con) . '</p>';
-
-				$sql = 'CREATE TABLE clan_types (clan_typeid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (clan_typeid))';
-				if (mysqli_query($con, $sql))
-					echo '<p>Table clan_types created successfully</p>';
-				else
-					echo '<p>Error creating table clan_types: ' . mysqli_error($con) . '</p>';
-
-				$sql = 'CREATE TABLE games_to_players_to_clan_types (gameid BIGINT NOT NULL, playerid BIGINT NOT NULL, clan_typeid BIGINT NOT NULL, FOREIGN KEY (gameid) REFERENCES games(gameid), FOREIGN KEY (playerid) REFERENCES players(playerid), FOREIGN KEY (clan_typeid) REFERENCES clan_types(clan_typeid))';
-				if (mysqli_query($con, $sql))
-					echo '<p>Table games_to_players_to_clan_types created successfully</p>';
-				else
-					echo '<p>Error creating table games_to_players_to_clan_types: ' . mysqli_error($con) . '</p>';
+				create_table($con, 'games', 'gameid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, PRIMARY KEY (gameid)');
+				create_table($con, 'players', 'playerid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) NOT NULL, username VARCHAR(25) UNIQUE NOT NULL, password CHAR(18) NOT NULL, PRIMARY KEY (playerid)');
+				create_table($con, 'clan_types', 'clan_typeid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (clan_typeid)');
+				create_table($con, 'clans', 'gameid BIGINT NOT NULL, playerid BIGINT NOT NULL, clan_typeid BIGINT NOT NULL, FOREIGN KEY (gameid) REFERENCES games(gameid), FOREIGN KEY (playerid) REFERENCES players(playerid), FOREIGN KEY (clan_typeid) REFERENCES clan_types(clan_typeid)');
+				create_table($con, 'tile_types', 'tile_typeid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (tile_typeid)');
+				create_table($con, 'tiles', 'tileid BIGINT NOT NULL AUTO_INCREMENT, gameid BIGINT NOT NULL, tile_typeid BIGINT NOT NULL, x BIGINT NOT NULL, y BIGINT NOT NULL, clan_typeid BIGINT, male_quantity BIGINT NOT NULL DEFAULT 0, female_quantity BIGINT NOT NULL DEFAULT 0, child_quantity BIGINT NOT NULL DEFAULT 0, PRIMARY KEY (tileid), FOREIGN KEY (gameid) REFERENCES games(gameid), FOREIGN KEY (tile_typeid) REFERENCES tile_types(tile_typeid), FOREIGN KEY (clan_typeid) REFERENCES clan_types(clan_typeid)');
+				create_table($con, 'material_types', 'material_typeid BIGINT NOT NULL, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (material_typeid)');
+				create_table($con, 'materials', 'tileid BIGINT NOT NULL, material_typeid BIGINT NOT NULL, quantity BIGINT, FOREIGN KEY (tileid) REFERENCES tiles(tileid), FOREIGN KEY (material_typeid) REFERENCES material_types(material_typeid)');
+				create_table($con, 'tile_types_to_material_types', 'tile_typeid BIGINT NOT NULL, material_typeid BIGINT NOT NULL, new_quantity BIGINT NOT NULL, round_quantity BIGINT NOT NULL, FOREIGN KEY (tile_typeid) REFERENCES tile_types(tile_typeid), FOREIGN KEY (material_typeid) REFERENCES material_types(material_typeid)');
 
 				// Summarize what we just created
 				$sql = 'SHOW TABLES';
@@ -121,7 +108,7 @@ switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 					echo '<p>Error writing clans password</p>';
 
 				// Create clans database user
-				$sql = 'CREATE USER clans@clans_of_macaria IDENTIFIED BY \'' . str_replace('\'', "\\'", $_GET['clans']) . '\'';
+				$sql = 'CREATE USER clans@localhost IDENTIFIED BY \'' . str_replace('\'', "\\'", $_GET['clans']) . '\'';
 				if (mysqli_query($con, $sql))
 					echo '<p>User clans created successfully</p>';
 				else
