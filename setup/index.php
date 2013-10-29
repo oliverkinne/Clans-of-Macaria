@@ -101,24 +101,24 @@ switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 				else
 					echo '<p>Error listing tables: ' . mysqli_error($con) . '</p>';
 
-				// Write out clans database user's password
-				if (file_put_contents('access.php', '<' . '?php $clans_of_macaria_password = \'' . str_replace('\'', "\\'", $_GET['clans']) . '\'; ?' . '>') > 0)
-					echo '<p>User clans password saved to ' . getcwd() . '/access.php</p>';
+				// Create clans database user, but drop it first
+				$sql = 'DROP USER clans@localhost';
+				if (mysqli_query($con, $sql))
+					echo '<p>User clans dropped successfully</p>';
 				else
-					echo '<p>Error writing clans password</p>';
+					echo '<p>Error dropping user clans: ' . mysqli_error($con) . '</p>';
 
-				// Create clans database user
 				$sql = 'CREATE USER clans@localhost IDENTIFIED BY \'' . str_replace('\'', "\\'", $_GET['clans']) . '\'';
 				if (mysqli_query($con, $sql))
 					echo '<p>User clans created successfully</p>';
 				else
 					echo '<p>Error creating user clans: ' . mysqli_error($con) . '</p>';
 
-				$sql = 'GRANT SELECT, INSERT, UPDATE, DELETE ON clans_of_macaria.* TO clans';
+				$sql = 'GRANT SELECT, INSERT, UPDATE, DELETE ON clans_of_macaria.* TO clans@localhost';
 				if (mysqli_query($con, $sql))
 					echo '<p>User clans given SELECT, INSERT, UPDATE and DELETE access to database clans_of_macaria successfully</p>';
 				else
-					echo '<p>Error giving full access: ' . mysqli_error($con) . '</p>';
+					echo '<p>Error giving SELECT, INSERT, UPDATE and DELETE access to user clans: ' . mysqli_error($con) . '</p>';
 
 				$sql = 'FLUSH PRIVILEGES';
 				if (mysqli_query($con, $sql))
@@ -126,13 +126,78 @@ switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 				else
 					echo '<p>Error flushing privileges: ' . mysqli_error($con) . '</p>';
 
-				$conclans = mysqli_connect('localhost', 'clans', $_GET['clans']);
+				// List database users
+				$sql = 'SELECT CONCAT(User, \'@\', Host), PASSWORD FROM mysql.user'; // WHERE User = \'clans\'';
+				$result = mysqli_query($con, $sql);
+				if ($result) {
+					echo '<p>Users in database:</p><ul>';
+					while ($row = mysqli_fetch_row($result))
+		                echo '<li><p>' . $row[0] . ' -- ' . $row[1] . '</p></li>';
+        		    echo '</ul>';
+				}
+				else
+					echo '<p>Error listing database users: ' . mysqli_error($con) . '</p>';
+
+				// Write out clans database user's password
+				if (file_put_contents('access.php', '<' . '?php $clans_of_macaria_password = \'' . str_replace('\'', "\\'", $_GET['clans']) . '\'; ?' . '>') > 0)
+					echo '<p>User clans password saved to ' . getcwd() . '/access.php</p>';
+				else
+					echo '<p>Error writing clans password</p>';
+
+				mysqli_close($con);
+
+				// Test clans user
+				$con = mysqli_connect('localhost', 'clans', $_GET['clans']);
 				if (mysqli_connect_errno())
-					echo '<p>Failed to connect to MySQL: ' . mysqli_connect_error() . '</p>';
+					echo '<p>Failed to connect to MySQL as clans: ' . mysqli_connect_error() . '</p>';
 				else {
-					echo '<p>User clans connected successfully</p>';
-	
-					mysqli_close($conclans);
+					echo '<p>Connected to MySQL as clans successfully.</p>';
+
+				// List current user
+				$sql = 'SELECT CURRENT_USER()';
+				$result = mysqli_query($con, $sql);
+				if ($result) {
+					echo '<p>Current user:</p><ul>';
+					while ($row = mysqli_fetch_row($result))
+		                echo '<li><p>' . $row[0] . '</p></li>';
+        		    echo '</ul>';
+				}
+				else
+					echo '<p>Error listing user info: ' . mysqli_error($con) . '</p>';
+
+				// Switch to new database
+				$sql = 'USE clans_of_macaria';
+				if (mysqli_query($con, $sql)) {
+					echo '<p>Database clans_of_macaria selected successfully</p>';
+
+					// Insert test data into games table
+					$sql = 'INSERT INTO games (name) VALUES (\'test\')';
+					if (mysqli_query($con, $sql))
+						echo '<p>Inserted test data into table games successfully.</p>';
+					else
+						echo '<p>Error inserting into table games: ' . mysqli_error($con) . '</p>';
+
+					// List data in games table
+					$sql = 'SELECT gameid, name FROM games';
+					$result = mysqli_query($con, $sql);
+					if ($result) {
+						echo '<p>Content of table games:</p><ul>';
+						while ($row = mysqli_fetch_row($result))
+			                echo '<li><p>' . $row[0] . ', ' . $row[1] . '</p></li>';
+	        		    echo '</ul>';
+					}
+					else
+						echo '<p>Error listing table games: ' . mysqli_error($con) . '</p>';
+
+					// Delete test data from games table
+					$sql = 'DELETE FROM games WHERE name = \'test\'';
+					if (mysqli_query($con, $sql))
+						echo '<p>Deleted test data from table games successfully.</p>';
+					else
+						echo '<p>Error deleting test data from table games: ' . mysqli_error($con) . '</p>';
+				}
+				else
+					echo '<p>Error selecting database clans_of_macaria: ' . mysqli_error($con) . '</p>';
 				}
 			}
 			else
