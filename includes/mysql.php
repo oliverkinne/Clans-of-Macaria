@@ -86,6 +86,27 @@ function dosql($con, $sql, $echo) {
 	return $rv;
 }
 
+function listsql($con, $sql, $echo) {
+	$table = explode(' FROM ', $sql, 2);
+	$table = explode(' ', $table[1] . ' ', 2);
+	$table = str_replace('mysql.', '', strtolower($table[0]));
+
+	$result = dosql($con, $sql, false);
+
+	if ($result) {
+		echo '<p>Records in ' . $table . ':</p><ul>';
+		while ($row = mysqli_fetch_row($result)) {
+			echo '<li><p>';
+			for ($col = 0; $col < count($row); $col++)
+				echo ($col > 0 ? ' -- ' : '') . $row[$col];
+			echo '</p></li>';
+		}
+		echo '</ul>';
+	}
+	else
+		echo '<p>Error listing records in ' . $table . ': ' . mysqli_error($con) . '</p>';
+}
+
 function create_table($con, $table, $fields, $echo) {
 	dosql($con, 'CREATE TABLE ' . $table . ' (' . $fields . ')', $echo);
 }
