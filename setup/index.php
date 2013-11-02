@@ -62,8 +62,9 @@ switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 				create_table($con, 'players', 'playerid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) NOT NULL, username VARCHAR(25) UNIQUE NOT NULL, password CHAR(18) NOT NULL, PRIMARY KEY (playerid)', true);
 				create_table($con, 'clan_types', 'clan_typeid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (clan_typeid)', true);
 				create_table($con, 'clans', 'gameid BIGINT NOT NULL, playerid BIGINT NOT NULL, clan_typeid BIGINT NOT NULL, FOREIGN KEY (gameid) REFERENCES games(gameid), FOREIGN KEY (playerid) REFERENCES players(playerid), FOREIGN KEY (clan_typeid) REFERENCES clan_types(clan_typeid)', true);
+				create_table($con, 'building_types', 'building_typeid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (building_typeid)', true);
 				create_table($con, 'tile_types', 'tile_typeid BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (tile_typeid)', true);
-				create_table($con, 'tiles', 'tileid BIGINT NOT NULL AUTO_INCREMENT, gameid BIGINT NOT NULL, tile_typeid BIGINT NOT NULL, x BIGINT NOT NULL, y BIGINT NOT NULL, clan_typeid BIGINT, male_quantity BIGINT NOT NULL DEFAULT 0, female_quantity BIGINT NOT NULL DEFAULT 0, child_quantity BIGINT NOT NULL DEFAULT 0, PRIMARY KEY (tileid), FOREIGN KEY (gameid) REFERENCES games(gameid), FOREIGN KEY (tile_typeid) REFERENCES tile_types(tile_typeid), FOREIGN KEY (clan_typeid) REFERENCES clan_types(clan_typeid)', true);
+				create_table($con, 'tiles', 'tileid BIGINT NOT NULL AUTO_INCREMENT, gameid BIGINT NOT NULL, tile_typeid BIGINT NOT NULL, x BIGINT NOT NULL, y BIGINT NOT NULL, clan_typeid BIGINT, male_quantity BIGINT NOT NULL DEFAULT 0, female_quantity BIGINT NOT NULL DEFAULT 0, child_quantity BIGINT NOT NULL DEFAULT 0, building_typeid BIGINT NOT NULL, PRIMARY KEY (tileid), FOREIGN KEY (gameid) REFERENCES games(gameid), FOREIGN KEY (tile_typeid) REFERENCES tile_types(tile_typeid), FOREIGN KEY (clan_typeid) REFERENCES clan_types(clan_typeid), FOREIGN KEY (building_typeid) REFERENCES building_types(building_typeid)', true);
 				create_table($con, 'material_types', 'material_typeid BIGINT NOT NULL, name VARCHAR(75) UNIQUE NOT NULL, image_url VARCHAR(255) NOT NULL, PRIMARY KEY (material_typeid)', true);
 				create_table($con, 'materials', 'tileid BIGINT NOT NULL, material_typeid BIGINT NOT NULL, quantity BIGINT, FOREIGN KEY (tileid) REFERENCES tiles(tileid), FOREIGN KEY (material_typeid) REFERENCES material_types(material_typeid)', true);
 				create_table($con, 'tile_types_to_material_types', 'tile_typeid BIGINT NOT NULL, material_typeid BIGINT NOT NULL, new_quantity BIGINT NOT NULL, round_quantity BIGINT NOT NULL, FOREIGN KEY (tile_typeid) REFERENCES tile_types(tile_typeid), FOREIGN KEY (material_typeid) REFERENCES material_types(material_typeid)', true);
@@ -99,16 +100,7 @@ switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 				dosql($con, 'FLUSH PRIVILEGES', true);
 
 				// List database users
-				$sql = 'SELECT CONCAT(User, \'@\', Host), PASSWORD FROM mysql.user'; // WHERE User = \'clans\'';
-				$result = mysqli_query($con, $sql);
-				if ($result) {
-					echo '<p>Users in database:</p><ul>';
-					while ($row = mysqli_fetch_row($result))
-		                echo '<li><p>' . $row[0] . ' -- ' . $row[1] . '</p></li>';
-        		    echo '</ul>';
-				}
-				else
-					echo '<p>Error listing database users: ' . mysqli_error($con) . '</p>';
+				listsql($con, 'SELECT CONCAT(User, \'@\', Host), PASSWORD FROM mysql.user', true);
 
 				// Write out clans database user's password
 				if (file_put_contents('access.php', '<' . '?php $clans_of_macaria_password = \'' . str_replace('\'', "\\'", $_GET['clans']) . '\'; ?' . '>') > 0)
@@ -143,19 +135,22 @@ switch (empty($_GET['setup']) ? '' : $_GET['setup']) {
 						dosql($con, 'INSERT INTO games (name) VALUES (\'test\')', true);
 
 						// List data in games table
-						$sql = 'SELECT gameid, name FROM games';
-						$result = mysqli_query($con, $sql);
-						if ($result) {
-							echo '<p>Content of table games:</p><ul>';
-							while ($row = mysqli_fetch_row($result))
-				                echo '<li><p>' . $row[0] . ', ' . $row[1] . '</p></li>';
-		        		    echo '</ul>';
-						}
-						else
-							echo '<p>Error listing table games: ' . mysqli_error($con) . '</p>';
+						listsql($con, 'SELECT gameid, name FROM games', true);
 
 						// Delete test data from games table
 						dosql($con, 'DELETE FROM games WHERE name = \'test\'', true);
+
+						// -------------------------
+						// Prefill with default data
+						// -------------------------
+
+						// Clan types
+						dosql($con, 'INSERT INTO clan_types (name, image_url) VALUES (\'Bat-Erdene\', \'images/clan_Bat-Erdene.png\'), (\'Otgonbayar\', \'images/clan_Otgonbayar.png\'), (\'Altantsetseg\', \'images/clan_Altantsetseg.png\'), (\'Gantulga\', \'images/clan_Gantulga.png\'), (\'Ganzorig\', \'images/clan_Ganzorig.png\'), (\'Enkhtuyaa\', \'images/clan_Enkhtuyaa.png\'), (\'Ganbold\', \'images/clan_Ganbold.png\'), (\'Narantsetseg\', \'images/clan_Narantsetseg.png\')', true);
+						listsql($con, 'SELECT clan_typeid, name, image_url FROM clan_types ORDER BY name', true);
+
+						// Tile types
+						dosql($con, 'INSERT INTO tile_types (name, image_url) VALUES (\'rock\', \'images/tile_rock.png\'), (\'river\', \'images/tile_river.png\'), (\'sea\', \'images/tile_sea.png\'), (\'grass\', \'images/tile_grass.png\'), (\'wood\', \'images/tile_wood.png\'), (\'desert\', \'images/tile_desert.png\')', true);
+						listsql($con, 'SELECT tile_typeid, name, image_url FROM tile_types ORDER BY name', true);
 					}
 				}
 			}
